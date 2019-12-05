@@ -1,2 +1,28 @@
 # Arweave-Monitor
-Python scripts to monitor Arweave Nodes to give miners visibility over the decentralized Permaweb.
+Arweave-Monitor is a python script to monitor Arweave nodes to give miners visibility over the decentralized Permaweb.  It will report on various metrics including
+- Wallet balances and blocks found
+- RAM and Storage usage
+- Local and network hash rates
+- Network utilization
+- Blockweave forks
+- Errors
+- Other various performance metrics
+
+Optionally, the script includes the capability to send all of this data to a Graphite server, which allows for rich visualization through reporting dashboard tools like Graphana.
+
+This script was developed for primary use with Ubuntu 18.04.  While it primarily uses Python3.8, the following prerequisites must be installed for this script to work properly.
+
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.8 -y
+sudo apt install python3.8-dev -y
+sudo apt install python3-pip -y
+sudo python3.8 -m pip install requests
+sudo python3.8 -m pip install psutil
+
+It is recommended to configure Arweave-Server and Arweave-Monitor as services, so they both start up automatically on boot up.
+
+Work to be completed
+- Add temperature monitor
+- Add better network bandwith utilization monitor
+- Include other operational capabilities, like restart Arweave-Server if it suffers unrecoverable errors.
