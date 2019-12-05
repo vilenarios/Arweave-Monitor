@@ -26,3 +26,5 @@ Work to be completed
 - Add temperature monitor
 - Add better network bandwith utilization monitor
 - Include other operational capabilities, like restart Arweave-Server if it suffers unrecoverable errors.
+
+Thanks to Gerrit and Marcin for helping me test this!  Please reach out to Vilenarios in the Arweave Mining discord if you have any issues or requests to add functionality.  Although I reserve the right to ignore them :)
