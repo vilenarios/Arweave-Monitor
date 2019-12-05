@@ -1,0 +1,55 @@
+# Create file in Arweave folder - ensure the location is updated to your node
+
+sudo nano /data/arweave/arweave-monitor.sh
+
+# Insert the following content
+#!/bin/bash
+python3.8 ./arweave-monitor.py
+
+# make arweave-monitoring.sh executable
+
+sudo chmod +x /data/arweave/arweave-monitor.sh
+
+# Create file in /lib/systemd/system/
+
+sudo nano /lib/systemd/system/arweave-monitor.service
+
+# Insert following content, ensure the user is updated and has root priviledges.  Script will run after 3 minutes.
+
+[Unit]
+Description="Arweave-monitor"
+
+[Service]
+User=your_user_name
+Group=root
+Type=oneshot
+WorkingDirectory=/data/arweave        
+ExecStartPre=/bin/sleep 180                            
+ExecStart=/data/arweave/arweave-monitor.sh
+
+[Install]
+WantedBy=multi-user.target
+
+# Reload daemon
+
+sudo systemctl daemon-reload
+
+# Enable service
+
+sudo systemctl enable arweave-monitor.service
+
+# To start service manually
+
+sudo systemctl start arweave-monitor.service
+
+# To restart the service manually
+
+sudo systemctl restart arweave-monitor.service
+
+# To stop service manually 
+
+sudo systemctl stop arweave-monitor.service
+
+# To check status of service
+ 
+sudo systemctl status arweave-monitor.service

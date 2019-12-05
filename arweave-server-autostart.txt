@@ -1,0 +1,66 @@
+# Create file in Arweave folder - ensure the location is updated to your node
+ 
+sudo nano /data/arweave/arweave-mining.sh
+
+#Insert following content (adjust arweave-server line to what you are using now):
+
+#!/bin/bash
+./arweave-server peer xx.xx.xx.xx \mine mining_addr XXXXXXXXXXXXXXXXX max_miners 8 enable randomx_large_pages
+
+# Make arweave-mining.sh executable
+ 
+sudo chmod +x arweave-mining.sh
+
+# Set large pages to be configured upon bootup
+
+sudo nano /etc/sysctl.d/local.conf
+
+# Insert the following content with your large pages number
+
+vm.nr_hugepages=your_number 
+
+# Create file in /lib/systemd/system/
+ 
+sudo nano /lib/systemd/system/arweave-mining.service
+
+# Insert following content, ensure the user is updated.  Script will run after 30 seconds.
+
+[Unit]
+Description="Arweave-mining"
+
+[Service]
+User=your_user_name
+Group=your_user_group
+Type=simple
+WorkingDirectory=/data/arweave        
+ExecStartPre=/bin/sleep 30                                       
+ExecStart=/data/arweave/arweave-mining.sh
+
+[Install]
+WantedBy=multi-user.target
+
+# Reload daemon: 
+
+sudo systemctl daemon-reload
+
+# Enable service so it will start after reboot 
+
+sudo systemctl enable arweave-mining.service
+
+# To start service manually 
+
+sudo systemctl start arweave-mining.service
+
+# To restart service manually
+
+sudo systemctl restart arweave-mining.service
+
+# To stop service manually 
+
+sudo systemctl stop arweave-mining.service
+
+# To check status of service 
+
+sudo systemctl status arweave-mining.service
+
+

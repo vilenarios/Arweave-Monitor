@@ -1,0 +1,57 @@
+# Some basic instructions on how to setup Grafana.  Suggested to deploy on at least 2vCPU with 4GB RAM.
+# https://grafana.com/docs/installation/debian/
+wget https://dl.grafana.com/oss/release/grafana_6.4.4_amd64.deb 
+sudo dpkg -i grafana_6.4.4_amd64.deb
+sudo apt-get install -y adduser libfontconfig1
+sudo apt --fix-broken install
+sudo apt-get install -y software-properties-common
+
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+
+sudo apt-get install -y apt-transport-https
+sudo apt-get update
+sudo apt-get install grafana
+
+# Installs binary to /usr/sbin/grafana-server
+# Installs Init.d script to /etc/init.d/grafana-server		
+# Creates default file (environment vars) to /etc/default/grafana-server
+# Installs configuration file to /etc/grafana/grafana.ini
+# Installs systemd service (if systemd is available) name grafana-server.service
+# The default configuration sets the log file at /var/log/grafana/grafana.log
+# The default configuration specifies an sqlite3 db at /var/lib/grafana/grafana.db
+# Installs HTML/JS/CSS and other Grafana files at /usr/share/grafana
+
+sudo service grafana-server start
+sudo update-rc.d grafana-server defaults
+
+sudo systemctl enable grafana-server.service
+systemctl daemon-reload
+
+# Some basic instructions on how to setup Graphite in docker.
+# https://computingforgeeks.com/how-to-install-and-configure-graphite-on-ubuntu-18-04/
+sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt update
+sudo apt install docker-ce
+sudo usermod -aG docker $USER
+
+# test docker, you may need sudo
+docker run hello-world
+
+# install graphite docker, placing perpetual storage in /data
+sudo docker run -d \
+ --name graphite \
+ --restart=always \
+ -p 8080:8080 \
+ -p 2003-2004:2003-2004 \
+ -p 2023-2024:2023-2024 \
+ -p 8125:8125/udp \
+ -p 8126:8126 \
+ -v /data/graphite/configs:/opt/graphite/conf \
+ -v /data/graphite/data:/opt/graphite/storage \
+ -v /data/graphite/statsd:/opt/statsd \
+ graphiteapp/graphite-statsd
+
+# Ensure ports 3000 (for Graphana portal) and port 2003 (for Graphite messages) are opened.
