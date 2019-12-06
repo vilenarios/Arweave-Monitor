@@ -8,7 +8,14 @@ Arweave-Monitor is a python script to monitor Arweave nodes to give miners visib
 - Errors
 - Other various performance metrics
 
-Optionally, the script includes the capability to send all of this data to a Graphite server, which allows for rich visualization through reporting dashboard tools like Graphana.  Otherwise, the script is designed to run without any other inputs from the miner, and all information is captured dynamically, local to the node itself.
+Optionally, the script includes the capability to send all of this data to a Graphite server, which allows for rich visualization through reporting dashboard tools like Graphana.  
+
+![All node performance example](https://github.com/vilenarios/Arweave-Monitor/blob/master/AllNodePerformance_GrafanaExample.JPG)
+
+![All node metrics example](https://github.com/vilenarios/Arweave-Monitor/blob/master/AllNodeMetrics_GrafanaExample.JPG)
+
+
+Otherwise, the script is designed to run without any other inputs from the miner, and all information is captured dynamically, local to the node itself.
 
 This script was developed for primary use with Ubuntu 18.04.  While it primarily uses Python3.8, the following prerequisites must be installed for this script to work properly.
 
