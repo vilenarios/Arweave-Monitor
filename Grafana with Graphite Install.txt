@@ -55,3 +55,20 @@ sudo docker run -d \
  graphiteapp/graphite-statsd
 
 # Ensure ports 3000 (for Graphana portal) and port 2003 (for Graphite messages) are opened.
+# To ensure data is captured properly there are 2 additional files you should modify
+# Modfy storage-schemas.conf and set the following retention for the [all metrics] category
+
+sudo nano /data/graphite/configs/storage-schemas.conf
+
+[all metrics]
+pattern = .*
+retentions = 60s:14d,5m:30d,10m:90d,30m:1y
+
+# Also modify storage-aggregation.conf and ensure xFilesFactor is set to 0.0, default is .3 for [default_average]
+
+sudo nano /data/graphite/configs/storage-aggregation.conf
+
+[default_average]
+pattern = .*
+xFilesFactor = 0.0
+aggregationMethod = average
