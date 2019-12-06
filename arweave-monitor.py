@@ -25,8 +25,10 @@ import psutil
 def toFixed(numObj, digits=0):
 	return f"{numObj:.{digits}f}"
 
-# Update to your graphite server IP and Port, will not trigger if xx.xx.xx.xx is used.
+# Update to your graphite server IP and Port
+# If graphite is not being used, leave this at xx.xx.xx.xx
 graphite_server_ip = 'xx.xx.xx.xx'
+# Default graphite port
 graphite_server_port = 2003
 
 # Setup some variables
@@ -66,7 +68,8 @@ node_peers = node_private_ip + '/peers'
 
 
 def send_msg(message):
-	#print ('sending message: ', message.strip())
+	# print ('sending message: ', message.strip())
+	# If you do not use graphite, and the IP is set to xx.xx.xx.xx then the below will be skipped and you will only receive messages locally
 	try:
 		if graphite_server_ip != 'xx.xx.xx.xx':
 			sock = socket.socket()
@@ -110,6 +113,12 @@ while True:
 		small_difficulty = math.log2((2**256) / ((2**256) - large_difficulty))
 		print ("Last Block Difficulty:", round(small_difficulty,3))
 		message = "%s.Difficulty %s %d\n" % (friendly_name, round(small_difficulty,3), int(time.time()))
+		send_msg(message)
+
+		# Get number of txs for last block
+		txs_amount = (latest_block['txs'])
+		print ("Txs for last block:", len(txs_amount))
+		message = "%s.LastBlockTxs %s %d\n" % (friendly_name, len(txs_amount), int(time.time()))
 		send_msg(message)
 
 		print("Blocks:", node_info['blocks'])
@@ -240,7 +249,7 @@ while True:
 		message = "%s.Metrics.Luck %s %d\n" % (friendly_name, round((chance_to_find / 60 / 60),3), int(time.time()))
 		send_msg(message)
 
-		# Determine if a blocks have been found
+		# Determine if any blocks have been found
 		try:
 			blocks_found = 'tac %s | grep "Stage 3/3" -c' % (latest_log_file)
 			blocks_found_count = subprocess.check_output(blocks_found, shell=True)
