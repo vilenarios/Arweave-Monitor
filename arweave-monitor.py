@@ -373,7 +373,7 @@ while True:
 		try:
 			no_foreign_blocks_found = 'tac %s | grep "no foreign blocks found" -c' % (latest_log_file)
 			no_foreign_blocks_found_count = subprocess.check_output(no_foreign_blocks_found, shell=True)
-			print ("no_foreign_blocks_found_count:", unexpected_tx_response_count.decode("utf-8").strip())
+			print ("no_foreign_blocks_found_count:", no_foreign_blocks_found_count.decode("utf-8").strip())
 			message = "%s.Logs.Errors.no_foreign_blocks_found_count %s %d\n" % (friendly_name, no_foreign_blocks_found_count.decode("utf-8").strip(), int(time.time()))
 		except:
 			print ("no_foreign_blocks_found_count: 0")
@@ -417,7 +417,7 @@ while True:
 			message = "%s.Logs.Warning.unexpected_tx_response_econnrefused_count %s %d\n" % (friendly_name, unexpected_tx_response_econnrefused_count.decode("utf-8").strip(), int(time.time()))
 		except:
 			print ("unexpected_tx_response_econnrefused_count: 0")
-			message = "%s.Logs.Warning.unexpected_tx_response__econnrefused_count 0 %d\n" % (friendly_name, int(time.time()))
+			message = "%s.Logs.Warning.unexpected_tx_response_econnrefused_count 0 %d\n" % (friendly_name, int(time.time()))
 		send_msg(message)
 
 		print("-------------------------------------------------------------------------")
