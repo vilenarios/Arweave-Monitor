@@ -1,4 +1,4 @@
-
+#!/usr/bin/python3.8
 # Python3.8 is the primary prerequisite for runnig this script effectively
 # sudo apt update
 # sudo apt install software-properties-common
