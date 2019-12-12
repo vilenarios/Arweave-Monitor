@@ -32,6 +32,7 @@ graphite_server_ip = 'xx.xx.xx.xx'
 graphite_server_port = 2003
 
 # Setup some variables
+old_total_bytes = 0
 starttime = time.time()
 ipv4_addr = requests.get('http://ip.42.pl/raw').text
 friendly_name = (socket.gethostname())
@@ -272,6 +273,15 @@ while True:
 		message = "%s.Metrics.Disk.FreeGB %s %d\n" % (friendly_name, (free // (2**30)), int(time.time()))
 		send_msg(message)
 
+		# Specific CPU metrics
+		try:
+			cpu_usage = psutil.cpu_percent()
+			print("Average CPU Thread Usage: %d percent" % cpu_usage)
+			message = "%s.Metrics.CPU_Usage %s %d\n" % (friendly_name, cpu_usage, int(time.time()))
+			send_msg(message)
+		except:
+			print("CPU capture failed.  Is psutil installed properly?")
+
 		# Specific RAM metrics
 		try:
 			memory = psutil.virtual_memory()
@@ -287,6 +297,35 @@ while True:
 			send_msg(message)
 		except:
 			print("Memory capture failed.  Is psutil installed properly?")
+
+		# Specific network metrics
+		open_connections = 'netstat -an | grep :%s | wc -l' % node_port
+		open_connections_count = subprocess.check_output(open_connections, shell=True)
+		print ("Open network connections:", open_connections_count.decode("utf-8").strip())
+		message = "%s.Metrics.Open_Connections %s %d\n" % (friendly_name, open_connections_count.decode("utf-8").strip(), int(time.time()))
+		send_msg(message)
+
+		try:
+			bytes_sent = psutil.net_io_counters().bytes_sent
+			print ("Bytes Sent:", bytes_sent)
+			message = "%s.Metrics.Bytes_Sent %s %d\n" % (friendly_name, bytes_sent, int(time.time()))
+			send_msg(message)
+
+			bytes_received = psutil.net_io_counters().bytes_recv
+			print ("Bytes Received:", bytes_received)
+			message = "%s.Metrics.Bytes_Received %s %d\n" % (friendly_name, bytes_received, int(time.time()))
+			send_msg(message)
+
+			# Calucate bits/second
+			new_total_bytes = bytes_received + bytes_sent
+			if old_total_bytes:
+				bits_per_second = ((new_total_bytes - old_total_bytes)*8)/60 # calculate bits/sec, since this script runs every minute
+				print ("Bits per Second:", bits_per_second)
+				message = "%s.Metrics.BitsPerSecond %s %d\n" % (friendly_name, bits_per_second, int(time.time()))
+				send_msg(message)
+			old_total_bytes = new_total_bytes
+		except:
+			print("Bits per second capture failed.  Is psutil installed properly?")
 
 		# Collect logs of interest including forks, errors
 		print("-----------------------------Logs----------------------------------------")
