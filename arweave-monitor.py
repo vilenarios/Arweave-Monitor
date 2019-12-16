@@ -1,5 +1,6 @@
 #!/usr/bin/python3.8
-# Python3.8 is the primary prerequisite for runnig this script effectively
+# Python3.8 is the primary prerequisite for runnig this script effectively.
+# This script must be placed in the root of the arweave directory.
 # sudo apt update
 # sudo apt install software-properties-common
 # sudo add-apt-repository ppa:deadsnakes/ppa
@@ -37,12 +38,12 @@ starttime = time.time()
 ipv4_addr = requests.get('http://ip.42.pl/raw').text
 friendly_name = (socket.gethostname())
 
-# Get and set arweave directory and log locations
-get_arweave_directory = 'locate arweave-server'
+# Get and set arweave directory and log locations - it does this by looking for this script which should be placed in the arweave directory.
+get_arweave_directory = 'locate arweave-monitor.py'
 get_arweave_directory = subprocess.check_output(get_arweave_directory, shell=True)
 arweave_directory = get_arweave_directory.split()
 arweave_directory = arweave_directory[0].decode("utf-8").strip()
-arweave_directory = arweave_directory.replace('arweave-server','')
+arweave_directory = arweave_directory.replace('arweave-monitor.py','')
 arweave_logs = arweave_directory + 'logs/*'
 
 # Get latest log file
@@ -138,8 +139,8 @@ while True:
 		node_all_peers = node_all_peers.split(",")
 		top_5_peers = '"' + node_all_peers[0] + ',' + node_all_peers[1] + ',' + node_all_peers[2] + ',' + node_all_peers[3] + ',' + node_all_peers[4] + '"'
 		print("My top 5 peers:", top_5_peers)
-		message = "%s.Peers.Top_5 %s %d\n" % (friendly_name, top_5_peers, int(time.time()))
-		send_msg(message)
+		# message = "%s.Peers.Top_5 %s %d\n" % (friendly_name, top_5_peers, int(time.time()))
+		# We cannot report this data to Graphite since IP addresses are non numeric.
 
 		print("Latency:", node_info['node_state_latency']/1000, "ms")
 		message = "%s.Latency %s %d\n" % (friendly_name, node_info['node_state_latency']/1000, int(time.time()))
