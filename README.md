@@ -26,6 +26,7 @@ sudo apt install python3.8-dev -y
 sudo apt install python3-pip -y
 sudo python3.8 -m pip install requests
 sudo python3.8 -m pip install psutil
+Place the arweave-monitor.py script in the root directory for Arweave
 
 It is recommended to configure Arweave-Server and Arweave-Monitor as services, so they both start up automatically on boot up.
 
