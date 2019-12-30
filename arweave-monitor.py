@@ -1,5 +1,5 @@
 #!/usr/bin/python3.8
-# Python3.8 is the primary prerequisite for runnig this script effectively.
+# Python3.8 is the primary prerequisite for runnig this script effectively
 # This script must be placed in the root of the arweave directory.
 # sudo apt update
 # sudo apt install software-properties-common
@@ -38,7 +38,7 @@ starttime = time.time()
 ipv4_addr = requests.get('http://ip.42.pl/raw').text
 friendly_name = (socket.gethostname())
 
-# Get and set arweave directory and log locations - it does this by looking for this script which should be placed in the arweave directory.
+# Get and set arweave directory and log locations
 get_arweave_directory = 'locate arweave-monitor.py'
 get_arweave_directory = subprocess.check_output(get_arweave_directory, shell=True)
 arweave_directory = get_arweave_directory.split()
@@ -108,13 +108,18 @@ while True:
 		message = "%s.Height %s %d\n" % (friendly_name, node_info['height'], int(time.time()))
 		send_msg(message)
 
-		# Calculate difficulty
+		# Get latest block and calculate difficulty
 		node_height = node_private_ip + '/block/height/' + str(node_info['height'])
 		latest_block = json.loads(requests.get(node_height).text)
 		large_difficulty = int(latest_block['diff'])
 		small_difficulty = math.log2((2**256) / ((2**256) - large_difficulty))
 		print ("Last Block Difficulty:", round(small_difficulty,3))
 		message = "%s.Difficulty %s %d\n" % (friendly_name, round(small_difficulty,3), int(time.time()))
+		send_msg(message)
+
+		block_size = (latest_block['block_size'])
+		print ("Size of last block:", block_size)
+		message = "%s.BlockSize %s %d\n" % (friendly_name, latest_block['block_size'], int(time.time()))
 		send_msg(message)
 
 		# Get number of txs for last block
@@ -139,8 +144,8 @@ while True:
 		node_all_peers = node_all_peers.split(",")
 		top_5_peers = '"' + node_all_peers[0] + ',' + node_all_peers[1] + ',' + node_all_peers[2] + ',' + node_all_peers[3] + ',' + node_all_peers[4] + '"'
 		print("My top 5 peers:", top_5_peers)
-		# message = "%s.Peers.Top_5 %s %d\n" % (friendly_name, top_5_peers, int(time.time()))
-		# We cannot report this data to Graphite since IP addresses are non numeric.
+		message = "%s.Peers.Top_5 %s %d\n" % (friendly_name, top_5_peers, int(time.time()))
+		send_msg(message)
 
 		print("Latency:", node_info['node_state_latency']/1000, "ms")
 		message = "%s.Latency %s %d\n" % (friendly_name, node_info['node_state_latency']/1000, int(time.time()))
@@ -253,6 +258,16 @@ while True:
 
 		# Determine if any blocks have been found
 		try:
+			blocks_submitted = 'tac %s | grep "Stage 2/3" -c' % (latest_log_file)
+			blocks_submitted_count = subprocess.check_output(blocks_submitted, shell=True)
+			print ("Blocks submitted to the network this session:", blocks_submitted_count.decode("utf-8").strip())
+			message = "%s.Logs.Blocks_submitted %s %d\n" % (friendly_name, blocks_submitted_count.decode("utf-8").strip(), int(time.time()))
+		except:
+			print ("Blocks submitted this session: 0")
+			message = "%s.Logs.Blocks_Found 0 %d\n" % (friendly_name, int(time.time()))
+		send_msg(message)
+
+		try:
 			blocks_found = 'tac %s | grep "Stage 3/3" -c' % (latest_log_file)
 			blocks_found_count = subprocess.check_output(blocks_found, shell=True)
 			print ("Blocks found this session:", blocks_found_count.decode("utf-8").strip())
@@ -300,7 +315,7 @@ while True:
 			print("Memory capture failed.  Is psutil installed properly?")
 
 		# Specific network metrics
-		open_connections = 'netstat -an | grep :%s | wc -l' % node_port
+		open_connections = 'netstat -an | wc -l'
 		open_connections_count = subprocess.check_output(open_connections, shell=True)
 		print ("Open network connections:", open_connections_count.decode("utf-8").strip())
 		message = "%s.Metrics.Open_Connections %s %d\n" % (friendly_name, open_connections_count.decode("utf-8").strip(), int(time.time()))
@@ -458,6 +473,37 @@ while True:
 		except:
 			print ("unexpected_tx_response_econnrefused_count: 0")
 			message = "%s.Logs.Warning.unexpected_tx_response_econnrefused_count 0 %d\n" % (friendly_name, int(time.time()))
+		send_msg(message)
+
+		try:
+			sqlite3_warning_long_query = 'tac %s | grep "ar_sqlite3: long_query" -c' % (latest_log_file)
+			sqlite3_warning_long_query_count = subprocess.check_output(sqlite3_warning_long_query, shell=True)
+			print ("sqlite3_warning_long_query_count:", sqlite3_warning_long_query_count.decode("utf-8").strip())
+			message = "%s.Logs.Warning.sqlite3_warning_long_query_count %s %d\n" % (friendly_name, sqlite3_warning_long_query_count.decode("utf-8").strip(), int(time.time()))
+		except:
+			print ("sqlite3_warning_long_query_count: 0")
+			message = "%s.Logs.Warning.sqlite3_warning_long_query_count 0 %d\n" % (friendly_name, int(time.time()))
+		send_msg(message)
+
+		try:
+			slow_data_segment_generation = 'tac %s | grep "slow_data_segment_generation" -c' % (latest_log_file)
+			slow_data_segment_generation_count = subprocess.check_output(slow_data_segment_generation, shell=True)
+			print ("slow_data_segment_generation_count:", slow_data_segment_generation_count.decode("utf-8").strip())
+			message = "%s.Logs.Warning.slow_data_segment_generation_count %s %d\n" % (friendly_name, slow_data_segment_generation_count.decode("utf-8").strip(), int(time.time()))
+		except:
+			print ("slow_data_segment_generation_count: 0")
+			message = "%s.Logs.Warning.slow_data_segment_generation_count 0 %d\n" % (friendly_name, int(time.time()))
+		send_msg(message)
+
+		try:
+			check_sqlite3_long_query_microseconds = 'tac %s | grep "microseconds:" -m1' % (latest_log_file)
+			sqlite3_long_query_microseconds = subprocess.check_output(check_sqlite3_long_query_microseconds, shell=True)
+			splitstring = sqlite3_long_query_microseconds.split()
+			print ("sqlite3_long_query_microseconds:", splitstring[1].decode("utf-8"))
+			message = "%s.Metrics.sqlite3_long_query_microseconds %s %d\n" % (friendly_name, splitstring[1].decode("utf-8"), int(time.time()))
+		except:
+			print ("tx_sqlite3_long_query_microseconds: 0")
+			message = "%s.Metrics.sqlite3_long_query_microseconds 0 %d\n" % (friendly_name, int(time.time()))
 		send_msg(message)
 
 		print("-------------------------------------------------------------------------")
