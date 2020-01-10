@@ -16,7 +16,7 @@ import json
 import sys, os
 import re
 import subprocess
-from datetime import datetime
+from datetime import datetime, date
 import time
 import socket
 import math
@@ -49,6 +49,13 @@ arweave_logs = arweave_directory + 'logs/*'
 # Get latest log file
 all_log_files = glob.glob(arweave_logs)
 latest_log_file = max(all_log_files, key=os.path.getctime)
+
+oldest_log_file = min(all_log_files, key=os.path.getctime)
+oldest_log_file = oldest_log_file.split("_")
+oldest_date = oldest_log_file[1].split("-")
+d1 = date(int(oldest_date[0]), int(oldest_date[1]), int(oldest_date[2]))
+d2 = date.today()
+days_of_logs = abs(d2-d1).days
 
 # Finalize variables
 get_node_port = 'cat %s | grep port' % (latest_log_file)
@@ -120,6 +127,11 @@ while True:
 		block_size = (latest_block['block_size'])
 		print ("Size of last block:", block_size)
 		message = "%s.BlockSize %s %d\n" % (friendly_name, latest_block['block_size'], int(time.time()))
+		send_msg(message)
+
+		weave_size = (latest_block['weave_size'])
+		print ("Current Weave Size:", weave_size)
+		message = "%s.WeaveSize %s %d\n" % (friendly_name, latest_block['weave_size'], int(time.time()))
 		send_msg(message)
 
 		# Get number of txs for last block
@@ -258,13 +270,37 @@ while True:
 
 		# Determine if any blocks have been found
 		try:
+			get_stage2_count = "cat %s | grep 'Stage 2/3' -c" % (arweave_logs)
+			get_stage2_count = subprocess.check_output(get_stage2_count, shell=True)
+			stage2_count = get_stage2_count.decode("utf-8").strip()
+			blocks_submitted_per_day = int(stage2_count) / days_of_logs
+			print ("Blocks submitted per day:", blocks_submitted_per_day)
+			message = "%s.Logs.Blocks_Submitted_Per_day %s %d\n" % (friendly_name, blocks_submitted_per_day, int(time.time()))
+		except:
+			print ("Blocks submitted per day: 0")
+			message = "%s.Logs.Blocks_Submitted_Per_day 0 %d\n" % (friendly_name, int(time.time()))
+		send_msg(message)
+
+		try:
 			blocks_submitted = 'tac %s | grep "Stage 2/3" -c' % (latest_log_file)
 			blocks_submitted_count = subprocess.check_output(blocks_submitted, shell=True)
 			print ("Blocks submitted to the network this session:", blocks_submitted_count.decode("utf-8").strip())
 			message = "%s.Logs.Blocks_submitted %s %d\n" % (friendly_name, blocks_submitted_count.decode("utf-8").strip(), int(time.time()))
 		except:
 			print ("Blocks submitted this session: 0")
-			message = "%s.Logs.Blocks_Found 0 %d\n" % (friendly_name, int(time.time()))
+			message = "%s.Logs.Blocks_Submitted 0 %d\n" % (friendly_name, int(time.time()))
+		send_msg(message)
+		
+		try:
+			get_stage3_count = "cat %s | grep 'Stage 3/3' -c" % (arweave_logs)
+			get_stage3_count = subprocess.check_output(get_stage3_count, shell=True)
+			stage3_count = get_stage3_count.decode("utf-8").strip()
+			blocks_found_per_day = int(stage3_count) / days_of_logs
+			print ("Blocks found per day:", blocks_found_per_day)
+			message = "%s.Logs.Blocks_Found_Per_day %s %d\n" % (friendly_name, blocks_found_per_day, int(time.time()))
+		except:
+			print ("Blocks found per day: 0")
+			message = "%s.Logs.Blocks_Found_Per_day 0 %d\n" % (friendly_name, int(time.time()))
 		send_msg(message)
 
 		try:
@@ -272,11 +308,21 @@ while True:
 			blocks_found_count = subprocess.check_output(blocks_found, shell=True)
 			print ("Blocks found this session:", blocks_found_count.decode("utf-8").strip())
 			message = "%s.Logs.Blocks_Found %s %d\n" % (friendly_name, blocks_found_count.decode("utf-8").strip(), int(time.time()))
+
 		except:
 			print ("Blocks found this session: 0")
 			message = "%s.Logs.Blocks_Found 0 %d\n" % (friendly_name, int(time.time()))
 		send_msg(message)
 
+		try:
+			blocks_found_ratio = blocks_found_per_day / blocks_submitted_per_day
+			print ("Blocks found/submitted ratio:", blocks_found_ratio)
+			message = "%s.Logs.Blocks_Found_Ratio %s %d\n" % (friendly_name, blocks_found_ratio, int(time.time()))
+		except:
+			print ("Blocks found/submitted ratio: 0")
+			message = "%s.Logs.Blocks_Found_Ratio 0 %d\n" % (friendly_name, int(time.time()))
+		send_msg(message)
+		
 		# Specific disk metrics
 		total, used, free = shutil.disk_usage(arweave_directory)
 		print("Total Arweave Disk: %d GB" % (total // (2**30)))
@@ -297,6 +343,23 @@ while True:
 			send_msg(message)
 		except:
 			print("CPU capture failed.  Is psutil installed properly?")
+
+		# Get CPU temp WORK IN PROGRESS
+		try:
+			average_temp = 0
+			core_count = 0
+			cpu_temps = psutil.sensors_temperatures()
+			for name, entries in cpu_temps.items():
+				for entry in entries:
+					if "Package id" in entry.label:
+						average_cpu_temp = entry.current
+						print("Average CPU Temp on all cores: %d °C" % average_cpu_temp)
+						message = "%s.Metrics.CPU_Avg_Temp %s %d\n" % (friendly_name, average_cpu_temp, int(time.time()))
+						send_msg(message)
+						break
+
+		except:
+			print("CPU temperature capture failed.  Is psutil installed properly?")
 
 		# Specific RAM metrics
 		try:
@@ -520,3 +583,10 @@ while True:
 	# Get latest log file
 	all_log_files = glob.glob(arweave_logs)
 	latest_log_file = max(all_log_files, key=os.path.getctime)
+
+	oldest_log_file = min(all_log_files, key=os.path.getctime)
+	oldest_log_file = oldest_log_file.split("_")
+	oldest_date = oldest_log_file[1].split("-")
+	d1 = date(int(oldest_date[0]), int(oldest_date[1]), int(oldest_date[2]))
+	d2 = date.today()
+	days_of_logs = abs(d2-d1).days
